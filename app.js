@@ -3,6 +3,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const ejs = require('ejs');
+const mongoose = require('mongoose');
 
 const app = express();
 
@@ -15,7 +16,17 @@ app.use(bodyParser.urlencoded({
 
 app.set('view engine', 'ejs');
 
-// Main Code
+mongoose.connect("mongodb://localhost:27017/userDB");
+mongoose.set('strictQuery', true);
+
+const userSchema = {
+    email: String,
+    password: String
+};
+
+const User = new mongoose.model("User", userSchema);
+
+// Operations with res and req
 
 app.get('/', (req, res) => {
     res.render('home');
@@ -27,6 +38,36 @@ app.get('/login', (req, res) => {
 
 app.get('/register', (req, res) => {
     res.render('register');
+});
+
+app.post('/register', (req, res) => {
+    const user = new User({
+        email: req.body.username,
+        password: req.body.password
+    });
+
+    user.save((err) => {
+        if (!err) {
+            res.render('secrets');
+        } else {
+            console.log(err);
+        }
+    });
+});
+
+app.post('/login', (req, res) => {
+    const username = req.body.username;
+    const password = req.body.password;
+
+    User.findOne({email: username}, (err, foundUser) => {
+        if (!err && foundUser) {
+            if(foundUser.password === password) {
+                res.render('secrets');
+            }
+        } else {
+            console.log(err);
+        }
+    });
 });
 
 // Listening
