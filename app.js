@@ -44,29 +44,33 @@ app.get('/register', (req, res) => {
 });
 
 app.post('/register', (req, res) => {
-    const user = new User({
-        email: req.body.username,
-        password: md5(req.body.password)
-    });
-
-    user.save((err) => {
-        if (!err) {
-            res.render('secrets');
-        } else {
-            console.log(err);
-        }
+    bcrypt.hash(req.body.password, saltRounds, (err, hash) => {
+        const user = new User({
+            email: req.body.username,
+            password: hash
+        });
+    
+        user.save((err) => {
+            if (!err) {
+                res.render('secrets');
+            } else {
+                console.log(err);
+            }
+        });
     });
 });
 
 app.post('/login', (req, res) => {
     const username = req.body.username;
-    const password = md5(req.body.password);
+    const password = req.body.password;
 
     User.findOne({email: username}, (err, foundUser) => {
         if (!err && foundUser) {
-            if (foundUser.password === password) {
-                res.render('secrets');
-            }
+            bcrypt.compare(password, foundUser.password, (err, result) => {
+                if (result === true) {
+                    res.render('secrets');
+                }
+            });
         } else {
             console.log(err);
         }
