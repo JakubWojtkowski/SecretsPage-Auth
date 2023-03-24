@@ -22,6 +22,8 @@ app.use(bodyParser.urlencoded({
     extended: true
 }));
 
+app.set('view engine', 'ejs');
+
 app.use(session({
   secret: 'Secret text.',
   resave: false,
@@ -33,8 +35,6 @@ app.use(passport.session());
 
 mongoose.connect("mongodb://localhost:27017/userDB");
 mongoose.set('strictQuery', true);
-
-app.set('view engine', 'ejs');
 
 const userSchema = new mongoose.Schema({
     email: String,
@@ -56,7 +56,7 @@ passport.serializeUser((user, done) => {
 });
 
 passport.deserializeUser((id, done) => {
-    UserfindById(id, (err, user) => {
+    User.findById(id, (err, user) => {
         done(err, user);
     });
 });
@@ -70,7 +70,7 @@ passport.use(new GoogleStrategy({
     userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo"
   },
   function(accessToken, refreshToken, profile, cb) {
-    console.log(profile);
+    // console.log(profile);
 
     User.findOrCreate({ googleId: profile.id }, (err, user) => {
       return cb(err, user);
@@ -84,16 +84,16 @@ app.get('/', (req, res) => {
     res.render('home');
 });
 
-app.get('/auth/google', (req, res) => {
-    passport.authenticate('google', { scope: ["profile"] });
-});
+app.get('/auth/google',
+    passport.authenticate('google', { scope: ["profile"] })
+    );
 
 app.get('/auth/google/secrets', 
   passport.authenticate('google', { failureRedirect: '/login' }),
   (req, res) => {
     // Successful authentication, redirect to secrets page.
     res.redirect('/secrets');
-  });
+});
 
 app.get('/login', (req, res) => {
     res.render('login');
