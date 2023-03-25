@@ -25,9 +25,9 @@ app.use(bodyParser.urlencoded({
 app.set('view engine', 'ejs');
 
 app.use(session({
-  secret: 'Secret text.',
-  resave: false,
-  saveUninitialized: false
+    secret: 'Secret text.',
+    resave: false,
+    saveUninitialized: false
 }));
 
 app.use(passport.initialize());
@@ -65,18 +65,20 @@ passport.deserializeUser((id, done) => {
 // Configure Strategy
 
 passport.use(new GoogleStrategy({
-    clientID: process.env.CLIENT_ID,
-    clientSecret: process.env.CLIENT_SECRET_KEY,
-    callbackURL: "http://localhost:3000/auth/google/secrets",
-    userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo"
-  },
-  function(accessToken, refreshToken, profile, cb) {
-    // console.log(profile);
+        clientID: process.env.CLIENT_ID,
+        clientSecret: process.env.CLIENT_SECRET_KEY,
+        callbackURL: "http://localhost:3000/auth/google/secrets",
+        userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo"
+    },
+    function (accessToken, refreshToken, profile, cb) {
+        // console.log(profile);
 
-    User.findOrCreate({ googleId: profile.id }, (err, user) => {
-      return cb(err, user);
-    });
-  }
+        User.findOrCreate({
+            googleId: profile.id
+        }, (err, user) => {
+            return cb(err, user);
+        });
+    }
 ));
 
 // Operations with routes
@@ -86,15 +88,19 @@ app.get('/', (req, res) => {
 });
 
 app.get('/auth/google',
-    passport.authenticate('google', { scope: ["profile"] })
-    );
+    passport.authenticate('google', {
+        scope: ["profile"]
+    })
+);
 
-app.get('/auth/google/secrets', 
-  passport.authenticate('google', { failureRedirect: '/login' }),
-  (req, res) => {
-    // Successful authentication, redirect to secrets page.
-    res.redirect('/secrets');
-});
+app.get('/auth/google/secrets',
+    passport.authenticate('google', {
+        failureRedirect: '/login'
+    }),
+    (req, res) => {
+        // Successful authentication, redirect to secrets page.
+        res.redirect('/secrets');
+    });
 
 app.get('/login', (req, res) => {
     res.render('login');
@@ -105,16 +111,22 @@ app.get('/register', (req, res) => {
 });
 
 app.get('/secrets', (req, res) => {
-   User.find({"secret": {$ne: null}})
-   .exec((err, foundUsers) => {
-    if (!err) {
-        if (foundUsers) {
-            res.render("secrets", {usersWithSecrets: foundUsers});
-        }
-    } else {
-        console.log(err);
-    }
-   });
+    User.find({
+            "secret": {
+                $ne: null
+            }
+        })
+        .exec((err, foundUsers) => {
+            if (!err) {
+                if (foundUsers) {
+                    res.render("secrets", {
+                        usersWithSecrets: foundUsers
+                    });
+                }
+            } else {
+                console.log(err);
+            }
+        });
 });
 
 app.get('/submit', (req, res) => {
@@ -134,12 +146,14 @@ app.get('/logout', (req, res) => {
 });
 
 app.post('/register', (req, res) => {
-    User.register({username: req.body.username}, req.body.password, (err, user) => {
+    User.register({
+        username: req.body.username
+    }, req.body.password, (err, user) => {
         if (err) {
             console.log(err);
             res.redirect('/register');
         } else {
-            passport.authenticate("local")(req, res, ()=> {
+            passport.authenticate("local")(req, res, () => {
                 res.redirect('/secrets');
             });
         }
@@ -147,20 +161,20 @@ app.post('/register', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
-   const user = new User({
-    username: req.body.username,
-    password: req.body.password
-   });
+    const user = new User({
+        username: req.body.username,
+        password: req.body.password
+    });
 
-   req.login(user, (err) => {
+    req.login(user, (err) => {
         if (err) {
             console.log(err);
         } else {
-            passport.authenticate("local")(req, res, ()=> {
+            passport.authenticate("local")(req, res, () => {
                 res.redirect('/secrets');
             });
         }
-  });
+    });
 });
 
 app.post('/submit', (req, res) => {
